@@ -1,0 +1,18 @@
+# Build
+/dist
+/build
+
+# Front-End
+src/index.html
+
+public/**/*.ts
+public/**/*.js
+public/**/*.tsx
+public/**/*.jsx
+public/**/*.vue
+
+src/vendors/**/*.ts
+src/vendors/**/*.js
+src/vendors/**/*.tsx
+src/vendors/**/*.jsx
+src/vendors/**/*.vue

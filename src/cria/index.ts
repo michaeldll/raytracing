@@ -70,7 +70,7 @@ export default class Criador {
     });
   }
 
-  // [0]: Buffers, shaders, pipeline
+  // [0]: Buffers, shaders, pipelines
   async initMeshes() {
     const shader = await fetchShader('assets/shaders/exampleUniform.wgsl')
     const triangle = new FullScreenTriangle(this, shader)

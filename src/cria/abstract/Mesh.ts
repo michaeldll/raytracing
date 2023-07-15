@@ -1,18 +1,19 @@
 import Criador from "..";
 
-export default abstract class Mesh{
-    renderer: Criador;
-    shaderModule: GPUShaderModule;
-    pipeline: GPURenderPipeline;
-    vertexBuffer: GPUBuffer;
+export default abstract class Mesh {
+    public renderer: Criador;
+    protected shaderModule: GPUShaderModule;
+    public pipeline: GPURenderPipeline; // Accessed
+    public vertexBuffer: GPUBuffer; // Accessed in passEncoder.setVertexBuffer
 
-    constructor(renderer: Criador) {
+    constructor(renderer: Criador, shader:string) {
         this.renderer = renderer;
     }
 
-    abstract initShaderModules(): void;
-
-    abstract initVertexBuffer(): void;
-
-    abstract initPipeline(): void;
+    protected abstract initShaderModules(shader:string): void;
+    protected abstract initVertexBuffer(): void;
+    protected abstract initPipeline(): void;
+    protected initUniforms?(): void
+    protected initTexture?(): void
+    public render?(): void
 }

@@ -1,9 +1,6 @@
-// [0]: Be sure to npm i @webgpu/types and add them to tsconfig.json
-// [0]: Example: "typeRoots": [ "./node_modules/@webgpu/types"]
-
 import '../scss/global.scss'
 import Mesh from "./abstract/Mesh";
-import FullScreenTriangle from "./examples/FullScreenTriangle";
+import FullScreenTriangle from "./examples/FullScreenPlane";
 import { fetchShader } from "./utils/fetchShader";
 
 /**
@@ -72,7 +69,7 @@ export default class Criador {
 
   // [0]: Buffers, shaders, pipelines
   async initMeshes() {
-    const shader = await fetchShader('assets/shaders/exampleUniform.wgsl')
+    const shader = await fetchShader('assets/shaders/raymarching.wgsl')
     const triangle = new FullScreenTriangle(this, shader)
     this.meshes.push(triangle)
   }

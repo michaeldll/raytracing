@@ -1,9 +1,14 @@
 import Criador from "..";
+import Geometry from "../geometries/plane";
 import Mesh from "../abstract/Mesh";
+import createBuffer from "../utils/createBuffer";
 
-export default class Triangle extends Mesh {
+export default class Plane extends Mesh {
     fragmentShaderUniformValues: Float32Array;
     fragmentUniformBuffer: GPUBuffer;
+    positionsBuffer: GPUBuffer;
+    uvsBuffer: GPUBuffer;
+    indicesBuffer: GPUBuffer;
     bindGroup: GPUBindGroup
     tintUniform: Float32Array;
 
@@ -11,35 +16,29 @@ export default class Triangle extends Mesh {
         super(renderer, shader);
 
         this.initShaderModules(shader)
-        this.initVertexBuffer()
+        this.initAttributeBuffers()
         this.initPipeline()
         this.initUniforms()
     }
 
     protected initShaderModules = (shader: string): void => {
         this.shaderModule = this.renderer.device.createShaderModule({
-            label: 'Triangle Shader Module',
+            label: 'Fullscreen Shader Module',
             code: shader
         });
     }
 
-    protected initVertexBuffer(): void {
+    protected initAttributeBuffers(): void {
+        const { positions, indices, uvs } = Geometry;
         // [0]: It's easiest to specify vertex data with TypedArrays, like a Float32Array. You are responsible for making sure the layout of the data matches the layout that you describe in the pipeline 'buffers'.
-        const vertexData = new Float32Array([
-            // X,Y,Z    R,G,B,A,
-            0, 1, 1,
-            -1, -1, 1,
-            1, -1, 1,
-        ]);
-        this.vertexBuffer = this.renderer.device.createBuffer({
-            // [0]: Buffers are given a size in bytes at creation that can't be changed.
-            size: vertexData.byteLength,
-            // [0]: Usage defines what this buffer can be used for: VERTEX = Can be passed to setVertexBuffer(); COPY_DST = You can write or copy data into it after creation.
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-        });
+        this.positionsBuffer = createBuffer(this.renderer.device, positions, GPUBufferUsage.VERTEX);
+        this.uvsBuffer = createBuffer(this.renderer.device, uvs, GPUBufferUsage.VERTEX);
+        this.indicesBuffer = createBuffer(this.renderer.device, indices, GPUBufferUsage.INDEX);
 
         // [0]: writeBuffer is the easiest way to TypedArray data into a buffer.
-        this.renderer.device.queue.writeBuffer(this.vertexBuffer, 0, vertexData);
+        this.renderer.device.queue.writeBuffer(this.positionsBuffer, 0, positions);
+        this.renderer.device.queue.writeBuffer(this.uvsBuffer, 0, uvs);
+        this.renderer.device.queue.writeBuffer(this.indicesBuffer, 0, indices);
     }
 
     // [1]: A pipeline, or more specifically a “render pipeline”, represents a pair of shaders used in a particular way.
@@ -55,14 +54,23 @@ export default class Triangle extends Mesh {
                 module: this.shaderModule,
                 entryPoint: 'vertexMain',
                 // [0]: `buffers` describes the layout of the attributes in the vertex buffers.
-                buffers: [{
-                    arrayStride: 3 * 4, // [0]: Bytes per vertex (3 floats)
-                    attributes: [{
-                        shaderLocation: 0, // [0]: VertexIn.pos in the shader
-                        offset: 0, // [0]: Starts at the beginning of the buffer
-                        format: 'float32x3' // [0]: Data is 3 floats
-                    }]
-                }],
+                buffers: [
+                    {
+                        arrayStride: 3 * 4, // [0]: Bytes per vertex (3 floats)
+                        attributes: [{
+                            shaderLocation: 0, // [0]: VertexIn.pos in the shader
+                            offset: 0, // [0]: Starts at the beginning of the buffer
+                            format: 'float32x3' // [0]: Data is 3 floats
+                        }]
+                    },
+                    // texcoords
+                    {
+                        arrayStride: 2 * 4,
+                        attributes: [
+                            { shaderLocation: 1, offset: 0, format: 'float32x2', },
+                        ],
+                    },
+                ],
             },
             fragment: {
                 module: this.shaderModule,
@@ -110,15 +118,16 @@ export default class Triangle extends Mesh {
     }
 
     public render = (): void => {
-        // vec3.normalize([1, 8, -10], lightDirection);
-
         // [0]: Set the pipeline to use when drawing.
         // [1]: which is kind of like the equivalent of gl.useProgram
         this.renderer.passEncoder.setPipeline(this.pipeline);
         // [1]: The bind group supplies samplers, textures, and uniforms buffers
         this.renderer.passEncoder.setBindGroup(0, this.bindGroup);
         // [0]: Set the vertex buffer to use when drawing. The `0` corresponds to the index of the `buffers` array in the pipeline.
-        this.renderer.passEncoder.setVertexBuffer(0, this.vertexBuffer);
+        this.renderer.passEncoder.setVertexBuffer(0, this.positionsBuffer);
+        this.renderer.passEncoder.setVertexBuffer(1, this.uvsBuffer);
+        this.renderer.passEncoder.setIndexBuffer(this.indicesBuffer, 'uint16');
+        this.renderer.passEncoder.drawIndexed(Geometry.indices.length);
         // [0]: Draw 3 vertices using the previously set pipeline and vertex buffer.
         this.renderer.passEncoder.draw(3);
 

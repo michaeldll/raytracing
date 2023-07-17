@@ -1,4 +1,8 @@
-# hunter-gatherer boilerplate
+# Raymarching in WebGPU
+
+Experimenting and learning.
+
+## hunter-gatherer boilerplate:
 
 A Typescript and WebGL boilerplate. As barebones I'm willing to go.
 

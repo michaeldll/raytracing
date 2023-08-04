@@ -1,19 +1,19 @@
-import Criador from "./cria";
+import Criador from "./cria/renderer";
+import shader from "./shaders/raymarching.wgsl"
+import FullScreenTriangle from "./cria/examples/meshes/FullScreenPlane";
 import "./scss/global.scss";
-import { callWhenReady } from "./utils";
 
-type Window = typeof window & {
-  IS_PRODUCTION: boolean;
+const canvas = document.querySelector(".webgpu-canvas") as HTMLCanvasElement;
+const renderer = new Criador(canvas)
+
+renderer.init().then(() => {
+  const triangle = new FullScreenTriangle(renderer, shader)
+  renderer.sceneGraph.push(triangle)
+  renderer.render()
+})
+
+// Enable hot reloading in development
+type Window = typeof window & { IS_PRODUCTION: boolean; };
+if (!(window as Window).IS_PRODUCTION) {
+  new EventSource('/esbuild').addEventListener('change', () => location.reload())
 };
-
-const init = () => {  
-  const canvas = document.querySelector(".webgpu-canvas") as HTMLCanvasElement;
-  new Criador(canvas)
-  
-  // Enable hot reloading in development
-  if (!(window as Window).IS_PRODUCTION) {
-    new EventSource('/esbuild').addEventListener('change', () => location.reload())
-  };
-};
-
-callWhenReady(init);

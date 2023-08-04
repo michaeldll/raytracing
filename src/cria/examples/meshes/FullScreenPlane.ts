@@ -1,7 +1,7 @@
-import Criador from "..";
-import Geometry from "../geometries/plane";
-import Mesh from "../abstract/Mesh";
-import createBuffer from "../utils/createBuffer";
+import Criador from "../../renderer";
+import Geometry from "../../geometries/plane";
+import Mesh from "../../abstract/Mesh";
+import createBuffer from "../../utils/createBuffer";
 
 export default class Plane extends Mesh {
     fragmentShaderUniformValues: Float32Array;
@@ -83,9 +83,9 @@ export default class Plane extends Mesh {
             primitive: {
                 cullMode: 'back', // [2] Default is 'none'
             },
-            ...(this.renderer.canvasSettings.sampleCount > 1 && {
+            ...(this.renderer.settings.sampleCount > 1 && {
                 multisample: {
-                    count: this.renderer.canvasSettings.sampleCount,
+                    count: this.renderer.settings.sampleCount,
                 },
             }),
         });

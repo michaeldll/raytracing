@@ -21,24 +21,6 @@ fn vertexMain(in: VertexIn) -> VertexOut {
 
 // -----------------------------------------------------------------------
 
-// mat3 calcLookAtMatrix(vec3 origin, vec3 target, float roll) {
-//   vec3 rr = vec3(sin(roll), cos(roll), 0.0);
-//   vec3 ww = normalize(target - origin);
-//   vec3 uu = normalize(cross(ww, rr));
-//   vec3 vv = normalize(cross(uu, ww));
-
-//   return mat3(uu, vv, ww);
-// }
-
-// vec3 getRay(mat3 camMat, vec2 screenPos, float lensLength) {
-//   return normalize(camMat * vec3(screenPos, lensLength));
-// }
-
-// vec3 getRay(vec3 origin, vec3 target, vec2 screenPos, float lensLength) {
-//   mat3 camMat = calcLookAtMatrix(origin, target, 0.0);
-//   return getRay(camMat, screenPos, lensLength);
-// }
-
 fn calcLookAtMatrix(origin: vec3f, matrixTarget: vec3f, roll: f32) -> mat3x3f {
     var rr: vec3f = vec3f(sin(roll), cos(roll), 0.0);
     var ww: vec3f = normalize(matrixTarget - origin);
@@ -57,6 +39,7 @@ fn getRay(origin: vec3f, rayTarget: vec3f, screenPos: vec2f, lensLength: f32) ->
     return getRayFromMatrix(camMat, screenPos, lensLength);
 }
 
+// SDF
 fn sdSphere(point: vec3f, radius: f32) -> f32 {
     return length(point) - radius;
 }
@@ -72,9 +55,9 @@ fn raymarch(rayOrigin: vec3f, rayDir: vec3f) -> f32 {
     var res: f32 = -1.0;
 
     // March along the ray
-    // [3]: All loops in WGSL must terminate.
     for (var i = 0; i < steps; i++) {
         // Break if we're close enough or too far away
+        // [3]: All loops in WGSL must terminate.
         if (latest < rayMarchPrecision || dist > maxdist) { break; };
         // Get the SDF distance
         var latest: f32 = sdSphere(rayOrigin + rayDir * dist, 1.0);
@@ -121,7 +104,7 @@ fn fragmentMain(in: VertexOut) -> FragmentOut {
 
     // If the ray collides, draw the surface
     if (collision > -0.5) {
-        color = vec3f(0.6, 0.1, 0.1);
+        color = vec3f(1., 0., 0.);
     }
 
     out.color = vec4f(color, 1.0);

@@ -1,4 +1,4 @@
-import Criador from "..";
+import Criador from "../renderer";
 
 export default abstract class Mesh {
     public renderer: Criador;

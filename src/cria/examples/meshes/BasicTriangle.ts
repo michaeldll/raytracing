@@ -1,5 +1,5 @@
-import Criador from "..";
-import Mesh from "../abstract/Mesh";
+import Criador from "../../renderer";
+import Mesh from "../../abstract/Mesh";
 
 export default class Triangle extends Mesh {
     protected positionsBuffer: GPUBuffer;

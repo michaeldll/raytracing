@@ -1,18 +1,14 @@
 import '../scss/global.scss'
-import Mesh from "./abstract/Mesh";
-import FullScreenTriangle from "./examples/FullScreenPlane";
-import { fetchShader } from "./utils/fetchShader";
+import { RendererSettings } from './types/RendererSettings';
 
 /**
  * This is the main entry point to the WebGPU app.
  */
 export default class Criador {
   public canvas: HTMLCanvasElement;
-  public canvasSettings = {
-    format: undefined,
-    depth: false,
-    sampleCount: 4,  // can be 1 or 4
-  };
+  public settings: RendererSettings;
+
+  public sceneGraph: any[] = [];
 
   private adapter: GPUAdapter;
   public device: GPUDevice;
@@ -27,19 +23,18 @@ export default class Criador {
   private depthTexture: GPUTexture;
   private depthTextureView: GPUTextureView;
 
-  private meshes: Array<Mesh> = [];
-
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, settings: RendererSettings = {
+    format: undefined,
+    depth: false,
+    sampleCount: 4,  // can be 1 or 4
+  }) {
     this.canvas = canvas;
-    this.init()
+    this.settings = settings;
   }
 
   async init() {
-    this.initAPI().then(() => {
-      this.initMeshes()
-      this.initRenderPassDescriptor()
-      this.render()
-    })
+    await this.initAPI()
+    this.initRenderPassDescriptor()
   }
 
   /* Initialisation :*/
@@ -57,21 +52,14 @@ export default class Criador {
     // [0]: Devices on their own don't display anything on the page. You need to
     // [0]: configure a canvas context as the output surface.
     this.context = this.canvas.getContext('webgpu');
-    this.canvasSettings.format = navigator.gpu.getPreferredCanvasFormat();
+    this.settings.format = navigator.gpu.getPreferredCanvasFormat();
     this.context.configure({
       device: this.device,
       // [0]: Mobile and desktop devices have different formats they prefer to output,
       // so usually you'll want to use the "preferred format" for you platform,
       // as queried from navigator.gpu.
-      format: this.canvasSettings.format
+      format: this.settings.format
     });
-  }
-
-  // [0]: Buffers, shaders, pipelines
-  async initMeshes() {
-    const shader = await fetchShader('assets/shaders/raymarching.wgsl')
-    const triangle = new FullScreenTriangle(this, shader)
-    this.meshes.push(triangle)
   }
 
   initRenderPassDescriptor() {
@@ -110,9 +98,9 @@ export default class Criador {
       depthStencilAttachment: depthAttachment,
     };
 
-    if (this.canvasSettings.sampleCount > 1 && !this.canvasSettings.depth) {
+    if (this.settings.sampleCount > 1 && !this.settings.depth) {
       this.renderPassDescriptor = multisampledRenderPassDescriptor
-    } else if (this.canvasSettings.sampleCount > 1 && this.canvasSettings.depth) {
+    } else if (this.settings.sampleCount > 1 && this.settings.depth) {
       this.renderPassDescriptor = depthMultisampledRenderPassDescriptor
     } else {
       this.renderPassDescriptor = basicRenderPassDescriptor
@@ -127,7 +115,7 @@ export default class Criador {
       format,
       sampleCount,
       depth
-    } = this.canvasSettings;
+    } = this.settings;
 
     // Lookup the size the browser is displaying the canvas in CSS pixels.
     // Unlike WebGL, we also need to clamp the size to the max size the GPU can render (device.limits).
@@ -179,7 +167,7 @@ export default class Criador {
     this.colorTextureView = this.colorTexture.createView();
 
     // If we're using multisampling, we need to render to a texture, then resolve it to the canvas.
-    if (this.canvasSettings.sampleCount === 1) {
+    if (this.settings.sampleCount === 1) {
       this.renderPassDescriptor.colorAttachments[0].view = this.colorTexture.createView();
     } else {
       this.renderPassDescriptor.colorAttachments[0].view = this.renderTargetView;
@@ -192,8 +180,8 @@ export default class Criador {
     // Start rendering:
     this.passEncoder = this.commandEncoder.beginRenderPass(this.renderPassDescriptor);
 
-    for (const mesh of this.meshes) {
-      mesh.render()
+    for (const node of this.sceneGraph) {
+      node.render()
     }
 
     // Finish rendering.
